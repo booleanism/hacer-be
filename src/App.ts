@@ -6,7 +6,7 @@ import { CheckList } from "./controller/CheckList";
 import { CheckLists, Importances } from "./model/CheckLists";
 import { formatCheckListBody } from "./utils";
 
-(async () => {
+async () => {
     const app = express();
     app.use(express.json());
     const conn = new Connection();
@@ -101,4 +101,32 @@ import { formatCheckListBody } from "./utils";
     app.listen(process.env.APPPORT, () => {
         console.log(`http://${process.env.APPHOST}:${process.env.APPPORT}`);
     });
+};
+
+(async () => {
+    const conn = new Connection();
+    const sign = new Sign(conn);
+    const checklist = new CheckList(conn);
+
+    let user: Users = {
+        uname: "hisam01",
+        passwd: "hisam2"
+    };
+
+    let obj: CheckLists = {
+        description: "makan bang",
+        date: new Date("2024-06-02T12:28:31.569Z"),
+        importanceId: {
+            id: 0
+        },
+        subject: "makan malam"
+    };
+
+    let newObj: CheckLists = {
+        userId: user
+    };
+
+    let key = (await sign.in(user)).key;
+
+    console.log(await checklist.readAll(newObj, key));
 })();
