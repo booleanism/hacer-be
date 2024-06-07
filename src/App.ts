@@ -16,7 +16,7 @@ import { formatCheckListBody } from "./utils";
     app.use((req: Request, res: Response, next: NextFunction) => {
         res.setHeader(
             "Access-Control-Allow-Origin",
-            `http://${process.env.FEHOST}:${process.env.FEPORT}`
+            `http://${process.env.FE_HOST}:${process.env.FE_PORT}`
         );
         res.setHeader(
             "Access-Control-Allow-Headers",
@@ -98,7 +98,7 @@ import { formatCheckListBody } from "./utils";
         res.send(edit);
     });
 
-    app.listen(process.env.APPPORT, () => {
-        console.log(`http://${process.env.APPHOST}:${process.env.APPPORT}`);
+    app.listen(process.env.APP_PORT, () => {
+        console.log(`http://${process.env.APP_HOST}:${process.env.APP_PORT}`);
     });
 })();

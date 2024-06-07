@@ -3,10 +3,10 @@ import { Pool } from "pg";
 export class Connection extends Pool {
     constructor() {
         super({
-            host: process.env.PGHOST,
-            user: process.env.PGUSER,
-            password: process.env.PGPASSWORD,
-            database: process.env.PGDATABASE
+            host: process.env.PG_HOST,
+            user: process.env.PG_USER,
+            password: process.env.PG_PW,
+            database: process.env.PG_DB
         });
 
         this.on("error", (err, client) => {

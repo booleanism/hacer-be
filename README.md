@@ -1,3 +1,21 @@
-# db
+# Hacer!
+A to-do list web-app.
 
-PG_USER='user' PG_PW='pw' docker compose up -d
+## Back-End
+Look inside ```.env```, change the value what you need.
+
+- DB setup
+```sh
+docker compose up -d
+```
+
+- Run it
+```sh
+npm install
+npm run dev
+```
+
+- To stop the DB
+```sh
+docker compose stop
+```

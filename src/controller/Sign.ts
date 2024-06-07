@@ -63,23 +63,24 @@ export class Sign {
         }
 
         if (res.data) {
-            if (res.data[0].uname && res.data[0].passwd && res.data[0].id) {
-                if (reqObj.passwd === res.data[0].passwd) {
-                    let key = sessEncryption(res.data[0].id, res.data[0].uname);
-                    Sign.userSession.set(res.data[0].uname, key);
-                    // console.log(Sign.userSession);
-
+            if (res.data.length > 0) {
+                if (res.data[0].uname && res.data[0].passwd && res.data[0].id) {
+                    if (reqObj.passwd === res.data[0].passwd) {
+                        let key = sessEncryption(res.data[0].id, res.data[0].uname);
+                        Sign.userSession.set(res.data[0].uname, key);
+    
+                        return {
+                            httpCode: 200,
+                            result: Results[Results.SignInSucceed],
+                            key: key
+                        };
+                    }
+    
                     return {
-                        httpCode: 200,
-                        result: Results[Results.SignInSucceed],
-                        key: key
+                        httpCode: 401,
+                        result: Results[Results.SignInFailed]
                     };
                 }
-
-                return {
-                    httpCode: 401,
-                    result: Results[Results.SignInFailed]
-                };
             }
 
             return {
