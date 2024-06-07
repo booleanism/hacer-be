@@ -4,6 +4,8 @@ A to-do list web-app.
 ## Back-End
 Look inside ```.env```, change the value what you need.
 
+all this step are inside this directory
+
 - DB setup
 ```sh
 docker compose up -d
