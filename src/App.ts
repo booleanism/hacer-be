@@ -102,37 +102,3 @@ async () => {
         console.log(`http://${process.env.APP_HOST}:${process.env.APP_PORT}`);
     });
 };
-
-(async () => {
-    const conn = new Connection();
-    const sign = new Sign(conn);
-    const checklist = new CheckList(conn);
-
-    let user: Users = {
-        uname: "kajshaj",
-        passwd: "jhavsa"
-    };
-
-    let obj: CheckLists = {
-        description: "makan bang",
-        date: new Date("2024-06-02T12:28:31.569Z"),
-        importanceId: {
-            id: 0
-        },
-        subject: "makan malam"
-    };
-
-    let newObj: CheckLists = {
-        userId: user
-    };
-
-    let key = (await sign.in(user)).key;
-
-    // const data = (await checklist.readAll({userId: user}, key)).data;
-    // if (data && data[0]) {
-    //     data[0].description = "ngoding lagi";
-    //     console.log(await checklist.edit(data[0], key))
-    // }
-    console.log(await checklist.readAll(newObj, key));
-    // console.log(await checklist.remove({id: "ebd24719-6ce6-478b-a994-b68cb8c22796", userId: user}, key));
-})();

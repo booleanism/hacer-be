@@ -1,5 +1,8 @@
 import { PoolClient } from "pg";
-import { CheckListRepository, UCheckLists } from "../repository/CheckListRepository";
+import {
+    CheckListRepository,
+    UCheckLists
+} from "../repository/CheckListRepository";
 import { Sign } from "./Sign";
 import { CheckLists } from "../model/CheckLists";
 import { Connection } from "../Connection";
@@ -43,7 +46,6 @@ export class CheckList {
         reqObj: CheckLists,
         key: string | undefined
     ): Promise<Respons> {
-        // console.log(reqObj)
         if (!key) {
             return {
                 httpCode: 403,
@@ -52,13 +54,11 @@ export class CheckList {
         }
 
         let auth = await this.auth(key);
-        // console.log(auth);
         if (auth) {
             reqObj.userId = {
                 uname: auth.uname,
                 id: auth.id
             };
-            // console.log(reqObj)
             const res = await new CheckListByUserRepository().read(
                 await this.conn.connect(),
                 reqObj as UCheckLists,
@@ -72,18 +72,17 @@ export class CheckList {
             }
 
             if (res.data) {
-
                 for (let i = 0; i < res.data.length; i++) {
                     if (typeof res.data[i].user_id === "string") {
                         res.data[i].userId = {
                             id: res.data[i].user_id
-                        }
+                        };
                     }
 
                     if (typeof res.data[i].importance_id === "number") {
                         res.data[i].importanceId = {
                             id: res.data[i].importance_id
-                        }
+                        };
                     }
                 }
             }
@@ -146,7 +145,6 @@ export class CheckList {
         reqObj: CheckLists,
         key: string | undefined
     ): Promise<Respons> {
-        // console.log(reqObj);
         if (!key) {
             return {
                 httpCode: 403,
@@ -166,7 +164,6 @@ export class CheckList {
                 reqObj
             );
 
-            // console.log(reqObj);
             if (res.messages !== Messages.OkUpdate) {
                 return {
                     httpCode: 400,
@@ -190,7 +187,11 @@ export class CheckList {
         reqObj: CheckLists,
         key: string | undefined
     ): Promise<Respons> {
-        if (!key || typeof reqObj.userId?.uname === "undefined" || typeof reqObj.id === "undefined") {
+        if (
+            !key ||
+            typeof reqObj.userId?.uname === "undefined" ||
+            typeof reqObj.id === "undefined"
+        ) {
             return {
                 httpCode: 403,
                 result: Results[Results.MissingRequiredField]
@@ -207,7 +208,7 @@ export class CheckList {
                 await this.conn.connect(),
                 reqObj
             );
-            
+
             if (res.data) {
                 if (res.messages !== Messages.OkDelete || res.data.length < 1) {
                     return {
@@ -274,13 +275,10 @@ export class CheckList {
     }
 
     private async auth(
-        key: string,
+        key: string
     ): Promise<{ id: string; uname: string; exp: string } | undefined> {
         const usersSession = await Sign.getUserSession();
         const dec = sessDecryption(key);
-        // console.log((await Sign.getUserSession()).get(id))
-        // console.log(await Sign.getUserSession())
-        // console.log(id);
         return (await Sign.getUserSession()).get(dec.id) === key
             ? { id: dec.id, uname: dec.uname, exp: dec.exp }
             : undefined;

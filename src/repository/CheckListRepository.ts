@@ -5,8 +5,8 @@ import { Repository } from "./Repository";
 import { FilterMode } from "./CheckListUserRepository";
 
 export type UCheckLists = CheckLists & {
-    user_id: string,
-    importance_id: number
+    user_id: string;
+    importance_id: number;
 };
 
 type U = UCheckLists;
@@ -19,7 +19,10 @@ export class CheckListRepository<C extends PoolClient>
         super();
     }
 
-    public async create<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
+    public async create<R extends WillBeRet<U>>(
+        conn: C,
+        data: CheckLists
+    ): Promise<R> {
         if (
             data.subject &&
             data.description &&
@@ -69,7 +72,10 @@ export class CheckListRepository<C extends PoolClient>
         } as R;
     }
 
-    public async update<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
+    public async update<R extends WillBeRet<U>>(
+        conn: C,
+        data: CheckLists
+    ): Promise<R> {
         if (
             data.id &&
             data.subject &&
@@ -78,7 +84,7 @@ export class CheckListRepository<C extends PoolClient>
             data.importanceId
         ) {
             if (typeof data.importanceId.id === "number") {
-                console.log(data)
+                console.log(data);
                 const query: Query = {
                     str: "UPDATE CheckLists SET subject = $1, description = $2, date = $3, importance_id = $4 WHERE id = $5 RETURNING *",
                     args: [
@@ -91,16 +97,17 @@ export class CheckListRepository<C extends PoolClient>
                 };
                 return super.crud(query, conn, Messages.OkUpdate);
             }
-
         }
 
-        // console.log(data.importanceId);
         return {
             messages: Messages.MissingField
         } as R;
     }
 
-    public async delete<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
+    public async delete<R extends WillBeRet<U>>(
+        conn: C,
+        data: CheckLists
+    ): Promise<R> {
         if (data.id && typeof data.userId?.id !== "undefined") {
             const query: Query = {
                 str: "DELETE FROM CheckLists WHERE id = $1 AND user_id = $2 RETURNING *",
