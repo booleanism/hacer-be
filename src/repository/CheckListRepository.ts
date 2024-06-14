@@ -4,17 +4,22 @@ import { IRepository, Messages, Query, WillBeRet } from "./IRepository";
 import { Repository } from "./Repository";
 import { FilterMode } from "./CheckListUserRepository";
 
-type U = CheckLists;
+export type UCheckLists = CheckLists & {
+    user_id: string,
+    importance_id: number
+};
+
+type U = UCheckLists;
 
 export class CheckListRepository<C extends PoolClient>
-    extends Repository<Query, CheckLists, C>
-    implements IRepository<CheckLists, C>
+    extends Repository<Query, U, C>
+    implements IRepository<U, C>
 {
     constructor() {
         super();
     }
 
-    public async create<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
+    public async create<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
         if (
             data.subject &&
             data.description &&
@@ -64,34 +69,38 @@ export class CheckListRepository<C extends PoolClient>
         } as R;
     }
 
-    public async update<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
+    public async update<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
         if (
             data.id &&
             data.subject &&
             data.description &&
             data.date &&
-            data.importanceId?.id
+            data.importanceId
         ) {
-            const query: Query = {
-                str: "UPDATE CheckLists SET subject = $1, description = $2, date = $3, importanceId = $4 WHERE id = $5 RETURNING *",
-                args: [
-                    data.subject,
-                    data.description,
-                    data.date.toString(),
-                    data.importanceId.id?.toString(),
-                    data.id
-                ]
-            };
+            if (typeof data.importanceId.id === "number") {
+                console.log(data)
+                const query: Query = {
+                    str: "UPDATE CheckLists SET subject = $1, description = $2, date = $3, importance_id = $4 WHERE id = $5 RETURNING *",
+                    args: [
+                        data.subject,
+                        data.description,
+                        data.date.toISOString(),
+                        data.importanceId.id?.toString(),
+                        data.id
+                    ]
+                };
+                return super.crud(query, conn, Messages.OkUpdate);
+            }
 
-            return super.crud(query, conn, Messages.OkUpdate);
         }
 
+        // console.log(data.importanceId);
         return {
             messages: Messages.MissingField
         } as R;
     }
 
-    public async delete<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
+    public async delete<R extends WillBeRet<U>>(conn: C, data: CheckLists): Promise<R> {
         if (data.id && typeof data.userId?.id !== "undefined") {
             const query: Query = {
                 str: "DELETE FROM CheckLists WHERE id = $1 AND user_id = $2 RETURNING *",

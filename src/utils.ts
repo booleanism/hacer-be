@@ -41,7 +41,7 @@ const iv = crypto
     .substring(0, 16);
 
 function encryptData(data: string): string {
-    if (process.env.CRYPTOKEY && process.env.CRYPTOIV) {
+    if (process.env.CRYPTO_KEY && process.env.CRYPTO_IV) {
         const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
 
         return Buffer.from(
@@ -53,7 +53,7 @@ function encryptData(data: string): string {
 }
 
 function decryptData(data: string) {
-    if (process.env.CRYPTOKEY && process.env.CRYPTOIV) {
+    if (process.env.CRYPTO_KEY && process.env.CRYPTO_IV) {
         const buff = Buffer.from(data, "base64");
         const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
 

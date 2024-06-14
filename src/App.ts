@@ -80,7 +80,7 @@ async () => {
         res.send(add);
     });
 
-    // todo
+    // done
     // required field { data: CheckLists, key: string }
     app.delete("/checklist/remove", async (req: Request, res: Response) => {
         const data = formatCheckListBody(req.body);
@@ -89,7 +89,7 @@ async () => {
         res.send(delete_);
     });
 
-    // todo
+    // done
     // required field { data: CheckLists, key: string }
     app.patch("/checklist/edit", async (req: Request, res: Response) => {
         const data = formatCheckListBody(req.body);
@@ -109,8 +109,8 @@ async () => {
     const checklist = new CheckList(conn);
 
     let user: Users = {
-        uname: "hisam01",
-        passwd: "hisam2"
+        uname: "kajshaj",
+        passwd: "jhavsa"
     };
 
     let obj: CheckLists = {
@@ -128,5 +128,11 @@ async () => {
 
     let key = (await sign.in(user)).key;
 
+    // const data = (await checklist.readAll({userId: user}, key)).data;
+    // if (data && data[0]) {
+    //     data[0].description = "ngoding lagi";
+    //     console.log(await checklist.edit(data[0], key))
+    // }
     console.log(await checklist.readAll(newObj, key));
+    // console.log(await checklist.remove({id: "ebd24719-6ce6-478b-a994-b68cb8c22796", userId: user}, key));
 })();

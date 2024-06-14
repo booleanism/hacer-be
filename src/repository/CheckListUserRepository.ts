@@ -1,9 +1,9 @@
 import { PoolClient } from "pg";
-import { CheckListRepository } from "./CheckListRepository";
+import { CheckListRepository, UCheckLists } from "./CheckListRepository";
 import { CheckLists } from "../model/CheckLists";
 import { Messages, Query, WillBeRet } from "./IRepository";
 
-type U = CheckLists;
+type U = UCheckLists;
 
 export enum FilterMode {
     All,
