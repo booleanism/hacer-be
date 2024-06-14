@@ -208,7 +208,7 @@ export class CheckList {
                 await this.conn.connect(),
                 reqObj
             );
-            
+
             if (res.data) {
                 if (res.messages !== Messages.OkDelete || res.data.length < 1) {
                     return {
