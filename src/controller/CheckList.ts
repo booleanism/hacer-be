@@ -43,8 +43,8 @@ export class CheckList {
     }
 
     public async readAll(
-        reqObj: CheckLists,
-        key: string | undefined
+        key: string | undefined,
+        reqObj?: CheckLists | undefined,
     ): Promise<Respons> {
         if (!key) {
             return {
@@ -55,6 +55,8 @@ export class CheckList {
 
         let auth = await this.auth(key);
         if (auth) {
+            const reqObj: CheckLists = {};
+            
             reqObj.userId = {
                 uname: auth.uname,
                 id: auth.id

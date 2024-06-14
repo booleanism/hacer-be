@@ -54,12 +54,12 @@ import { formatCheckListBody } from "./utils";
     });
 
     // done
-    // required field { data: CheckLists key: string }
+    // required field { key: string }
     app.get("/checklist", async (req: Request, res: Response) => {
-        const data = formatCheckListBody(req.body);
-        let read = await checklist.readAll(data, req.body.key);
+        let read = await checklist.readAll(req.body.key);
         res.statusCode = read.httpCode;
         res.send(read);
+        // console.log(req.body.key);
     });
 
     // todo
