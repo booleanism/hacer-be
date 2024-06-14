@@ -169,7 +169,7 @@ export class CheckList {
         reqObj: CheckLists,
         key: string | undefined
     ): Promise<Respons> {
-        if (!key || typeof reqObj.userId?.uname === "undefined") {
+        if (!key || typeof reqObj.userId?.uname === "undefined" || typeof reqObj.id === "undefined") {
             return {
                 httpCode: 403,
                 result: Results[Results.MissingRequiredField]
