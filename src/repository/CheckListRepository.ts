@@ -99,6 +99,7 @@ export class CheckListRepository<C extends PoolClient>
             }
         }
 
+        // console.log(data.importanceId);
         return {
             messages: Messages.MissingField
         } as R;
