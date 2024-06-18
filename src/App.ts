@@ -56,7 +56,9 @@ import { formatCheckListBody } from "./utils";
     // done
     // required field { key: string }
     app.get("/checklist", async (req: Request, res: Response) => {
-        let read = await checklist.readAll(req.body.key);
+        const key = req.headers.authorization?.split(' ')[1]
+        // console.log(key);
+        let read = await checklist.readAll(key);
         res.statusCode = read.httpCode;
         res.send(read);
         // console.log(req.body.key);
