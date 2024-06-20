@@ -54,7 +54,9 @@ import { formatCheckListBody } from "./utils";
     });
 
     // done
-    // required field { key: string }
+    // specs:
+    // - header
+    // Auhtorization: Basic {key}
     app.get("/checklist", async (req: Request, res: Response) => {
         const key = req.headers.authorization?.split(' ')[1]
         // console.log(key);
@@ -73,29 +75,47 @@ import { formatCheckListBody } from "./utils";
     });
 
     // done
-    // required field { data: CheckLists, key: string }
+    // specs:
+    // - header
+    // Auhtorization: Basic {key}
+    // Content-Type: application/json
+    // - body
+    // {"subject": string, "description": string, "date": "string", "importance_id": number}
     app.post("/checklist/add", async (req: Request, res: Response) => {
+        const key = req.headers.authorization?.split(' ')[1]
         const data = formatCheckListBody(req.body);
-        let add = await checklist.add(data, req.body.key);
+        let add = await checklist.add(data, key);
 
         res.statusCode = add.httpCode;
         res.send(add);
     });
 
     // done
-    // required field { data: CheckLists, key: string }
+    // specs:
+    // - header
+    // Authorization: Basic {key}
+    // Content-Type: application/json
+    // - body
+    // {"id": string} 
     app.delete("/checklist/remove", async (req: Request, res: Response) => {
+        const key = req.headers.authorization?.split(' ')[1]
         const data = formatCheckListBody(req.body);
-        let delete_ = await checklist.remove(data, req.body.key);
+        let delete_ = await checklist.remove(data, key);
         res.statusCode = delete_.httpCode;
         res.send(delete_);
     });
 
     // done
-    // required field { data: CheckLists, key: string }
+    // specs:
+    // - header
+    // Authorization: Basic {key}
+    // Content-Type: application/json
+    // - body
+    // {"id": string, "subject": string, "description": string, "date": "string", "importance_id": number}
     app.patch("/checklist/edit", async (req: Request, res: Response) => {
+        const key = req.headers.authorization?.split(' ')[1]
         const data = formatCheckListBody(req.body);
-        let edit = await checklist.edit(data, req.body.key);
+        let edit = await checklist.edit(data, key);
         res.statusCode = edit.httpCode;
         res.send(edit);
     });

@@ -15,14 +15,14 @@ export function sessEncryption(id: string, uname: string): string {
 
 export function formatCheckListBody(body: any): CheckLists {
     let importances: Importances = {
-        id: body.data.importance_id
+        id: body.importance_id
     };
 
     let data: CheckLists = {
-        id: body.data.id,
-        subject: body.data.subject,
-        date: new Date(body.data.date),
-        description: body.data.description,
+        id: body.id,
+        subject: body.subject,
+        date: new Date(body.date),
+        description: body.description,
         importanceId: importances
     };
 
