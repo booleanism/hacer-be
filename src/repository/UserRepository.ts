@@ -72,4 +72,20 @@ export class UserRepository<C extends PoolClient>
             messages: Messages.MissingField
         } as R;
     }
+
+    public async readById<R extends WillBeRet<Users>>(conn: C, id: string): Promise<R> {
+        try {
+            const query: Query = {
+                str: "SELECT * FROM Users WHERE id = $1",
+                args: [id]
+            };
+
+            return super.crud(query, conn, Messages.OkRead);
+        } catch (error) {
+            console.error("Error in readById:", error);
+            return {
+                messages: Messages.MissingField
+            } as R;
+        }
+    }
 }

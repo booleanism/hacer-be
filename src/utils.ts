@@ -1,6 +1,16 @@
 import crypto from "crypto";
 import { CheckLists, Importances } from "./model/CheckLists";
-import { Auth } from "./controller/Sign";
+import { Auth, Sign } from "./controller/Sign";
+
+export async function authUser(
+    key: string
+): Promise<{ id: string; uname: string; exp: string } | undefined> {
+    const usersSession = await Sign.getUserSession();
+    const dec = sessDecryption(key);
+    return (await Sign.getUserSession()).get(dec.id) === key
+        ? { id: dec.id, uname: dec.uname, exp: dec.exp }
+        : undefined;
+}
 
 export function sessDecryption(key: string): Auth {
     const dec = decryptData(key);

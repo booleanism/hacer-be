@@ -1,6 +1,7 @@
 import { Connection } from "./Connection";
 import { Sign } from "./controller/Sign";
 import express, { NextFunction, Request, Response } from "express";
+import { Profile } from "./controller/Profile"; // Import Profile
 import { Users } from "./model/Users";
 import { CheckList } from "./controller/CheckList";
 import { CheckLists, Importances } from "./model/CheckLists";
@@ -12,6 +13,7 @@ import { formatCheckListBody } from "./utils";
     const conn = new Connection();
     const sign = new Sign(conn);
     const checklist = new CheckList(conn);
+    const profile = new Profile(conn);
 
     app.use((req: Request, res: Response, next: NextFunction) => {
         res.setHeader(
@@ -119,6 +121,33 @@ import { formatCheckListBody } from "./utils";
         res.statusCode = edit.httpCode;
         res.send(edit);
     });
+
+        // Endpoint untuk mendapatkan data user
+        app.get("/user/profile", async (req: Request, res: Response) => {
+            try {
+                const key = req.headers.authorization?.split(' ')[1];
+                const user = await profile.getUser(key);
+                res.statusCode = user.httpCode;
+                res.send(user);
+            } catch (error: any) {
+                res.statusCode = 500;
+                res.send({ error: error.message });
+            }
+        });
+    
+        // Endpoint untuk memperbarui data user
+        app.put("/user/profile", async (req: Request, res: Response) => {
+            try {
+                const key = req.headers.authorization?.split(' ')[1];
+                const user = req.body;
+                const update = await profile.updateUser(user, key);
+                res.statusCode = update.httpCode;
+                res.send(update);
+            } catch (error: any) {
+                res.statusCode = 500;
+                res.send({ error: error.message });
+            }
+        });
 
     app.listen(process.env.APP_PORT, () => {
         console.log(`http://${process.env.APP_HOST}:${process.env.APP_PORT}`);
