@@ -7,7 +7,7 @@ import { Sign } from "./Sign";
 import { CheckLists } from "../model/CheckLists";
 import { Connection } from "../Connection";
 import { Messages } from "../repository/IRepository";
-import { sessDecryption } from "../utils";
+import { authUser, sessDecryption } from "../utils";
 import {
     CheckListByUserRepository,
     FilterMode
@@ -53,7 +53,7 @@ export class CheckList {
             };
         }
 
-        let auth = await this.auth(key);
+        let auth = await authUser(key);
         if (auth) {
             const reqObj: CheckLists = {};
             
@@ -113,7 +113,7 @@ export class CheckList {
             };
         }
 
-        let auth = await this.auth(key);
+        let auth = await authUser(key);
         if (auth) {
             reqObj.userId = {
                 uname: auth.uname,
@@ -154,7 +154,7 @@ export class CheckList {
             };
         }
 
-        let auth = await this.auth(key);
+        let auth = await authUser(key);
         if (auth) {
             let user: Users = {
                 uname: auth.uname,
@@ -198,7 +198,7 @@ export class CheckList {
             };
         }
 
-        let auth = await this.auth(key);
+        let auth = await authUser(key);
         if (auth) {
             reqObj.userId = {
                 uname: auth.uname,
@@ -242,7 +242,7 @@ export class CheckList {
             };
         }
 
-        let auth = await this.auth(key);
+        let auth = await authUser(key);
         if (auth) {
             reqObj.userId = {
                 uname: auth.uname,
@@ -272,15 +272,5 @@ export class CheckList {
             httpCode: 401,
             result: Results[Results.AuthFailed]
         };
-    }
-
-    private async auth(
-        key: string
-    ): Promise<{ id: string; uname: string; exp: string } | undefined> {
-        const usersSession = await Sign.getUserSession();
-        const dec = sessDecryption(key);
-        return (await Sign.getUserSession()).get(dec.id) === key
-            ? { id: dec.id, uname: dec.uname, exp: dec.exp }
-            : undefined;
     }
 }

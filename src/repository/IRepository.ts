@@ -23,7 +23,8 @@ export enum Messages {
     OkDelete, // 0x06
     ErrDelete, // 0x07
     NoEntry, // 0x08
-    MissingField // 0x09
+    MissingField, // 0x09
+    Error
 }
 
 export interface IRepository<U, Conn> {

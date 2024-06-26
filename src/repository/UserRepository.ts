@@ -46,7 +46,7 @@ export class UserRepository<C extends PoolClient>
     public async update<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
         if (data.name && data.passwd && data.passwd && data.uname) {
             const query: Query = {
-                str: "UPDATE FROM Users SET name = $1, passwd = $2 WHERE uname = $3 RETURNING *",
+                str: "UPDATE Users SET name = $1, passwd = $2 WHERE uname = $3 RETURNING *",
                 args: [data.name, data.passwd, data.uname]
             };
 
@@ -71,5 +71,21 @@ export class UserRepository<C extends PoolClient>
         return {
             messages: Messages.MissingField
         } as R;
+    }
+
+    public async readById<R extends WillBeRet<Users>>(conn: C, id: string): Promise<R> {
+        try {
+            const query: Query = {
+                str: "SELECT * FROM Users WHERE id = $1",
+                args: [id]
+            };
+
+            return super.crud(query, conn, Messages.OkRead);
+        } catch (error) {
+            console.error("Error in readById:", error);
+            return {
+                messages: Messages.MissingField
+            } as R;
+        }
     }
 }
