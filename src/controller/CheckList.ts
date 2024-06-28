@@ -13,6 +13,7 @@ import {
     FilterMode
 } from "../repository/CheckListUserRepository";
 import { Users } from "../model/Users";
+import { UserRepository } from "../repository/UserRepository";
 
 type Respons = {
     httpCode: number;
@@ -53,10 +54,48 @@ export class CheckList {
             };
         }
 
+        if (key === process.env.BOT_KEY) {
+            const res = await (new CheckListRepository().readAll(await this.conn.connect()));
+
+            if (res.messages !== Messages.OkRead) {
+                return {
+                    httpCode: 417,
+                    result: Results[Results.ReadFailed]
+                }
+            }
+
+            if (res.data) {
+                for (let i = 0; i < res.data.length; i++) {
+                    if (typeof res.data[i].user_id === "string") {
+                        let usr: Users = {
+                            id: res.data[i].user_id
+                        }
+                        const userRes = await new UserRepository().readById(await this.conn.connect(), usr);
+                        if (userRes.data) {
+                            res.data[i].userId = userRes.data[0];
+                        }
+                    }
+
+                    if (typeof res.data[i].importance_id === "number") {
+                        res.data[i].importanceId = {
+                            id: res.data[i].importance_id
+                        };
+                    }
+                }
+            }
+
+
+            return {
+                httpCode: 200,
+                result: Results[Results.ReadSucceed],
+                data: res.data
+            }
+        }
+
         let auth = await authUser(key);
         if (auth) {
             const reqObj: CheckLists = {};
-            
+
             reqObj.userId = {
                 uname: auth.uname,
                 id: auth.id
@@ -190,7 +229,7 @@ export class CheckList {
         key: string | undefined
     ): Promise<Respons> {
         if (
-            !key 
+            !key
         ) {
             return {
                 httpCode: 403,

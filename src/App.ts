@@ -55,6 +55,13 @@ import { formatCheckListBody } from "./utils";
         res.send(out);
     });
 
+    app.get("/checklist/getall", async (req: Request, res: Response) => {
+        let key = req.headers.authorization?.split(' ')[1];
+        let readAll = await checklist.readAll(key);
+        res.statusCode = readAll.httpCode;
+        res.send(readAll);
+    })
+
     // done
     // specs:
     // - header
@@ -122,32 +129,32 @@ import { formatCheckListBody } from "./utils";
         res.send(edit);
     });
 
-        // Endpoint untuk mendapatkan data user
-        app.get("/user/profile", async (req: Request, res: Response) => {
-            try {
-                const key = req.headers.authorization?.split(' ')[1];
-                const user = await profile.getUser(key);
-                res.statusCode = user.httpCode;
-                res.send(user);
-            } catch (error: any) {
-                res.statusCode = 500;
-                res.send({ error: error.message });
-            }
-        });
-    
-        // Endpoint untuk memperbarui data user
-        app.put("/user/profile", async (req: Request, res: Response) => {
-            try {
-                const key = req.headers.authorization?.split(' ')[1];
-                const user = req.body;
-                const update = await profile.updateUser(user, key);
-                res.statusCode = update.httpCode;
-                res.send(update);
-            } catch (error: any) {
-                res.statusCode = 500;
-                res.send({ error: error.message });
-            }
-        });
+    // Endpoint untuk mendapatkan data user
+    app.get("/user/profile", async (req: Request, res: Response) => {
+        try {
+            const key = req.headers.authorization?.split(' ')[1];
+            const user = await profile.getUser(key);
+            res.statusCode = user.httpCode;
+            res.send(user);
+        } catch (error: any) {
+            res.statusCode = 500;
+            res.send({ error: error.message });
+        }
+    });
+
+    // Endpoint untuk memperbarui data user
+    app.put("/user/profile", async (req: Request, res: Response) => {
+        try {
+            const key = req.headers.authorization?.split(' ')[1];
+            const user = req.body;
+            const update = await profile.updateUser(user, key);
+            res.statusCode = update.httpCode;
+            res.send(update);
+        } catch (error: any) {
+            res.statusCode = 500;
+            res.send({ error: error.message });
+        }
+    });
 
     app.listen(process.env.APP_PORT, () => {
         console.log(`http://${process.env.APP_HOST}:${process.env.APP_PORT}`);

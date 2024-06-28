@@ -13,8 +13,7 @@ type U = UCheckLists;
 
 export class CheckListRepository<C extends PoolClient>
     extends Repository<Query, U, C>
-    implements IRepository<U, C>
-{
+    implements IRepository<U, C> {
     constructor() {
         super();
     }
@@ -52,6 +51,18 @@ export class CheckListRepository<C extends PoolClient>
             messages: Messages.MissingField
         } as R;
     }
+
+    public async readAll<R extends WillBeRet<U>>(
+        conn: C,
+    ): Promise<R> {
+        const query: Query = {
+            str: "SELECT * FROM CheckLists",
+            args: []
+        };
+
+        return super.crud(query, conn, Messages.OkRead);
+    }
+
 
     public async read<R extends WillBeRet<U>>(
         conn: C,

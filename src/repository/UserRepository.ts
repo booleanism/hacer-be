@@ -7,8 +7,7 @@ type U = Users;
 
 export class UserRepository<C extends PoolClient>
     extends Repository<Query, Users, C>
-    implements IRepository<Users, C>
-{
+    implements IRepository<Users, C> {
     constructor() {
         super();
     }
@@ -27,6 +26,23 @@ export class UserRepository<C extends PoolClient>
             messages: Messages.MissingField
         } as R;
     }
+
+
+    public async readById<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
+        if (data.id) {
+            const query: Query = {
+                str: "SELECT * FROM Users WHERE id = $1",
+                args: [data.id]
+            };
+
+            return super.crud(query, conn, Messages.OkRead);
+        }
+
+        return {
+            messages: Messages.MissingField
+        } as R;
+    }
+
 
     public async read<R extends WillBeRet<U>>(conn: C, data: U): Promise<R> {
         if (data.uname) {
