@@ -7,7 +7,7 @@ export async function authUser(
 ): Promise<{ id: string; uname: string; exp: string } | undefined> {
     const usersSession = await Sign.getUserSession();
     const dec = sessDecryption(key);
-    return (await Sign.getUserSession()).get(dec.id) === key
+    return usersSession.get(dec.id) === key
         ? { id: dec.id, uname: dec.uname, exp: dec.exp }
         : undefined;
 }

@@ -1,8 +1,3 @@
-export type WillBeWrite = {};
-export type WillBeRead = {
-    id?: string | undefined;
-};
-
 export type WillBeRet<T> = {
     messages: Messages;
     data?: T[] | undefined;
@@ -27,9 +22,9 @@ export enum Messages {
     Error
 }
 
-export interface IRepository<U, Conn> {
-    create<R extends WillBeRet<U>>(conn: Conn, data: U): Promise<R>;
-    read<R extends WillBeRet<U>>(conn: Conn, data: U): Promise<R>;
-    update<R extends WillBeRet<U>>(conn: Conn, data: U): Promise<R>;
-    delete<R extends WillBeRet<U>>(conn: Conn, data: U): Promise<R>;
+export interface IRepository<U> {
+    create<R extends WillBeRet<U>>(data: U): Promise<R>;
+    read<R extends WillBeRet<U>>(data: U): Promise<R>;
+    update<R extends WillBeRet<U>>(data: U): Promise<R>;
+    delete<R extends WillBeRet<U>>(data: U): Promise<R>;
 }

@@ -1,4 +1,3 @@
-import { PoolClient } from "pg";
 import { Connection } from "../Connection";
 import { Users } from "../model/Users";
 import { UserRepository } from "../repository/UserRepository";
@@ -31,15 +30,13 @@ type Respons = {
 
 export class Sign {
     private static userSession: UserMap;
-    private users: UserRepository<PoolClient>;
 
-    constructor(private conn: Connection) {
-        this.users = new UserRepository();
+    constructor(private users: UserRepository<Connection>) {
         Sign.userSession = new Map<string, string>();
     }
 
     public async up(reqObj: Users): Promise<Respons> {
-        const res = await this.users.create(await this.conn.connect(), reqObj);
+        const res = await this.users.create(reqObj);
         if (res.messages !== Messages.OkCreate) {
             return {
                 httpCode: 400,
@@ -54,69 +51,57 @@ export class Sign {
     }
 
     public async in(reqObj: Users): Promise<Respons> {
-        const res = await this.users.read(await this.conn.connect(), reqObj);
-        if (res.messages !== Messages.OkRead) {
+        const res = await this.users.read(reqObj);
+        if (res.messages !== Messages.OkRead || !res.data) {
             return {
                 httpCode: 401,
                 result: Results[Results.SignInFailed]
             };
         }
 
-        if (res.data) {
-            if (res.data.length > 0) {
-                if (res.data[0].uname && res.data[0].passwd && res.data[0].id) {
-                    if (reqObj.passwd === res.data[0].passwd) {
-                        let key = sessEncryption(
-                            res.data[0].id,
-                            res.data[0].uname
-                        );
-                        Sign.userSession.set(res.data[0].id, key);
-
-                        return {
-                            httpCode: 200,
-                            result: Results[Results.SignInSucceed],
-                            key: key
-                        };
-                    }
-
-                    return {
-                        httpCode: 401,
-                        result: Results[Results.SignInFailed]
-                    };
-                }
-            }
-
+        if (!(res.data[0].uname && res.data[0].passwd && res.data[0].id)) {
             return {
                 httpCode: 401,
                 result: Results[Results.SignInFailed]
             };
         }
+
+        if (reqObj.passwd !== res.data[0].passwd) {
+            return {
+                httpCode: 401,
+                result: Results[Results.SignInFailed]
+            };
+        }
+
+        let key = sessEncryption(res.data[0].id, res.data[0].uname);
+        Sign.userSession.set(res.data[0].id, key);
 
         return {
-            httpCode: 406,
-            result: Results[Results.MissingRequiredField]
+            httpCode: 200,
+            result: Results[Results.SignInSucceed],
+            key: key
         };
     }
 
     public async out(key: string | undefined): Promise<Respons> {
-        if (key) {
-            let dec = sessDecryption(key);
-            if (Sign.userSession.delete(dec.uname)) {
-                return {
-                    httpCode: 200,
-                    result: Results[Results.SignOUtSucceed]
-                };
-            }
-
+        if (!key) {
             return {
-                httpCode: 401,
-                result: Results[Results.SignOutFailed]
+                httpCode: 406,
+                result: Results[Results.MissingRequiredField]
+            };
+        }
+
+        let dec = sessDecryption(key);
+        if (Sign.userSession.delete(dec.uname)) {
+            return {
+                httpCode: 200,
+                result: Results[Results.SignOUtSucceed]
             };
         }
 
         return {
-            httpCode: 406,
-            result: Results[Results.MissingRequiredField]
+            httpCode: 401,
+            result: Results[Results.SignOutFailed]
         };
     }
 

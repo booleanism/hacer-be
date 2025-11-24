@@ -1,17 +1,11 @@
-import { PoolClient } from "pg";
 import {
     CheckListRepository,
     UCheckLists
 } from "../repository/CheckListRepository";
-import { Sign } from "./Sign";
 import { CheckLists } from "../model/CheckLists";
 import { Connection } from "../Connection";
 import { Messages } from "../repository/IRepository";
-import { authUser, sessDecryption } from "../utils";
-import {
-    CheckListByUserRepository,
-    FilterMode
-} from "../repository/CheckListUserRepository";
+import { authUser } from "../utils";
 import { Users } from "../model/Users";
 import { UserRepository } from "../repository/UserRepository";
 
@@ -37,15 +31,47 @@ enum Results {
 }
 
 export class CheckList {
-    private clRepo: CheckListRepository<PoolClient>;
+    constructor(
+        private clRepo: CheckListRepository<Connection>,
+        private userRepo: UserRepository<Connection>
+    ) {}
 
-    constructor(private conn: Connection) {
-        this.clRepo = new CheckListRepository();
+    private async readUserCb(i: number, ucl: UCheckLists[]) {
+        let usr: Users = {
+            id: ucl[i].user_id
+        };
+        const userRes = await this.userRepo.readById(usr);
+        if (userRes.data) {
+            ucl[i].userId = userRes.data[0];
+        }
+    }
+
+    private async processData(
+        ucl: UCheckLists[],
+        readUserCb?: (i: number, ucl: UCheckLists[]) => void
+    ) {
+        for (let i = 0; i < ucl.length; i++) {
+            if (typeof ucl[i].user_id === "string") {
+                if (readUserCb) {
+                    readUserCb(i, ucl);
+                } else {
+                    ucl[i].userId = {
+                        id: ucl[i].user_id
+                    };
+                }
+            }
+
+            if (typeof ucl[i].importance_id === "number") {
+                ucl[i].importanceId = {
+                    id: ucl[i].importance_id
+                };
+            }
+        }
     }
 
     public async readAll(
         key: string | undefined,
-        reqObj?: CheckLists | undefined,
+        _?: CheckLists | undefined
     ): Promise<Respons> {
         if (!key) {
             return {
@@ -55,78 +81,15 @@ export class CheckList {
         }
 
         if (key === process.env.BOT_KEY) {
-            const res = await (new CheckListRepository().readAll(await this.conn.connect()));
-
-            if (res.messages !== Messages.OkRead) {
-                return {
-                    httpCode: 417,
-                    result: Results[Results.ReadFailed]
-                }
-            }
-
-            if (res.data) {
-                for (let i = 0; i < res.data.length; i++) {
-                    if (typeof res.data[i].user_id === "string") {
-                        let usr: Users = {
-                            id: res.data[i].user_id
-                        }
-                        const userRes = await new UserRepository().readById(await this.conn.connect(), usr);
-                        if (userRes.data) {
-                            res.data[i].userId = userRes.data[0];
-                        }
-                    }
-
-                    if (typeof res.data[i].importance_id === "number") {
-                        res.data[i].importanceId = {
-                            id: res.data[i].importance_id
-                        };
-                    }
-                }
-            }
-
-
-            return {
-                httpCode: 200,
-                result: Results[Results.ReadSucceed],
-                data: res.data
-            }
-        }
-
-        let auth = await authUser(key);
-        if (auth) {
-            const reqObj: CheckLists = {};
-
-            reqObj.userId = {
-                uname: auth.uname,
-                id: auth.id
-            };
-            const res = await new CheckListByUserRepository().read(
-                await this.conn.connect(),
-                reqObj as UCheckLists,
-                FilterMode.All
-            );
-            if (res.messages !== Messages.OkRead) {
+            const res = await this.clRepo.readAll();
+            if (res.messages !== Messages.OkRead || !res.data) {
                 return {
                     httpCode: 417,
                     result: Results[Results.ReadFailed]
                 };
             }
 
-            if (res.data) {
-                for (let i = 0; i < res.data.length; i++) {
-                    if (typeof res.data[i].user_id === "string") {
-                        res.data[i].userId = {
-                            id: res.data[i].user_id
-                        };
-                    }
-
-                    if (typeof res.data[i].importance_id === "number") {
-                        res.data[i].importanceId = {
-                            id: res.data[i].importance_id
-                        };
-                    }
-                }
-            }
+            this.processData(res.data, this.readUserCb);
 
             return {
                 httpCode: 200,
@@ -135,9 +98,34 @@ export class CheckList {
             };
         }
 
+        let auth = await authUser(key);
+        if (!auth) {
+            return {
+                httpCode: 401,
+                result: Results[Results.AuthFailed]
+            };
+        }
+
+        const reqObj: CheckLists = {};
+
+        reqObj.userId = {
+            uname: auth.uname,
+            id: auth.id
+        };
+        const res = await this.clRepo.read(reqObj as UCheckLists);
+        if (res.messages !== Messages.OkRead || !res.data) {
+            return {
+                httpCode: 417,
+                result: Results[Results.ReadFailed]
+            };
+        }
+
+        this.processData(res.data);
+
         return {
-            httpCode: 401,
-            result: Results[Results.AuthFailed]
+            httpCode: 200,
+            result: Results[Results.ReadSucceed],
+            data: res.data
         };
     }
 
@@ -153,32 +141,29 @@ export class CheckList {
         }
 
         let auth = await authUser(key);
-        if (auth) {
-            reqObj.userId = {
-                uname: auth.uname,
-                id: auth.id
-            };
-
-            const res = await this.clRepo.create(
-                await this.conn.connect(),
-                reqObj
-            );
-            if (res.messages !== Messages.OkCreate) {
-                return {
-                    httpCode: 400,
-                    result: Results[Results.AddFailed]
-                };
-            }
-
+        if (!auth) {
             return {
-                httpCode: 201,
-                result: Results[Results.AddSuccees]
+                httpCode: 401,
+                result: Results[Results.AuthFailed]
+            };
+        }
+
+        reqObj.userId = {
+            uname: auth.uname,
+            id: auth.id
+        };
+
+        const res = await this.clRepo.create(reqObj);
+        if (res.messages !== Messages.OkCreate) {
+            return {
+                httpCode: 400,
+                result: Results[Results.AddFailed]
             };
         }
 
         return {
-            httpCode: 401,
-            result: Results[Results.AuthFailed]
+            httpCode: 201,
+            result: Results[Results.AddSuccees]
         };
     }
 
@@ -194,33 +179,30 @@ export class CheckList {
         }
 
         let auth = await authUser(key);
-        if (auth) {
-            let user: Users = {
-                uname: auth.uname,
-                id: auth.id
-            };
-            reqObj.userId = user;
-            const res = await this.clRepo.update(
-                await this.conn.connect(),
-                reqObj
-            );
-
-            if (res.messages !== Messages.OkUpdate) {
-                return {
-                    httpCode: 400,
-                    result: Results[Results.EditFailed]
-                };
-            }
-
+        if (!auth) {
             return {
-                httpCode: 200,
-                result: Results[Results.EditSucceed]
+                httpCode: 401,
+                result: Results[Results.AuthFailed]
+            };
+        }
+
+        let user: Users = {
+            uname: auth.uname,
+            id: auth.id
+        };
+        reqObj.userId = user;
+        const res = await this.clRepo.update(reqObj);
+
+        if (res.messages !== Messages.OkUpdate) {
+            return {
+                httpCode: 400,
+                result: Results[Results.EditFailed]
             };
         }
 
         return {
-            httpCode: 401,
-            result: Results[Results.AuthFailed]
+            httpCode: 200,
+            result: Results[Results.EditSucceed]
         };
     }
 
@@ -228,9 +210,7 @@ export class CheckList {
         reqObj: CheckLists,
         key: string | undefined
     ): Promise<Respons> {
-        if (
-            !key
-        ) {
+        if (!key) {
             return {
                 httpCode: 403,
                 result: Results[Results.MissingRequiredField]
@@ -238,35 +218,36 @@ export class CheckList {
         }
 
         let auth = await authUser(key);
-        if (auth) {
-            reqObj.userId = {
-                uname: auth.uname,
-                id: auth.id
-            };
-            const res = await this.clRepo.delete(
-                await this.conn.connect(),
-                reqObj
-            );
-
-            if (res.data) {
-                if (res.messages !== Messages.OkDelete || res.data.length < 1) {
-                    return {
-                        httpCode: 400,
-                        result: Results[Results.RemoveFailed]
-                    };
-                }
-            }
-
+        if (!auth) {
             return {
-                httpCode: 200,
-                result: Results[Results.RemoveSecceed],
-                data: res.data
+                httpCode: 401,
+                result: Results[Results.AuthFailed]
+            };
+        }
+
+        reqObj.userId = {
+            uname: auth.uname,
+            id: auth.id
+        };
+        const res = await this.clRepo.delete(reqObj);
+        if (!res.data) {
+            return {
+                httpCode: 400,
+                result: Results[Results.RemoveFailed]
+            };
+        }
+
+        if (res.messages !== Messages.OkDelete || res.data.length < 1) {
+            return {
+                httpCode: 400,
+                result: Results[Results.RemoveFailed]
             };
         }
 
         return {
-            httpCode: 401,
-            result: Results[Results.AuthFailed]
+            httpCode: 200,
+            result: Results[Results.RemoveSecceed],
+            data: res.data
         };
     }
 
@@ -282,34 +263,37 @@ export class CheckList {
         }
 
         let auth = await authUser(key);
-        if (auth) {
-            reqObj.userId = {
-                uname: auth.uname,
-                id: auth.id
-            };
-
-            const res = await new CheckListByUserRepository().read(
-                await this.conn.connect(),
-                reqObj as UCheckLists,
-                FilterMode.ByDate
-            );
-            if (res.messages !== Messages.OkRead) {
-                return {
-                    httpCode: 417,
-                    result: Results[Results.ReadFailed]
-                };
-            }
-
+        if (!auth) {
             return {
-                httpCode: 200,
-                result: Results[Results.ReadSucceed],
-                data: res.data
+                httpCode: 401,
+                result: Results[Results.AuthFailed]
+            };
+        }
+
+        reqObj.userId = {
+            uname: auth.uname,
+            id: auth.id
+        };
+
+        const res = await this.clRepo.read(reqObj as UCheckLists);
+        if (!res.data) {
+            return {
+                httpCode: 400,
+                result: Results[Results.RemoveFailed]
+            };
+        }
+
+        if (res.messages !== Messages.OkRead) {
+            return {
+                httpCode: 417,
+                result: Results[Results.ReadFailed]
             };
         }
 
         return {
-            httpCode: 401,
-            result: Results[Results.AuthFailed]
+            httpCode: 200,
+            result: Results[Results.ReadSucceed],
+            data: res.data
         };
     }
 }

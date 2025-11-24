@@ -9,7 +9,7 @@ export class Connection extends Pool {
             database: process.env.PG_DB
         });
 
-        this.on("error", (err, client) => {
+        this.on("error", (err, _) => {
             console.error("Unexpected error on idle client", err);
             process.exit(-1);
         });

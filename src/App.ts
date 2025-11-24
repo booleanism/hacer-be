@@ -4,18 +4,24 @@ import express, { NextFunction, Request, Response } from "express";
 import { Profile } from "./controller/Profile"; // Import Profile
 import { Users } from "./model/Users";
 import { CheckList } from "./controller/CheckList";
-import { CheckLists, Importances } from "./model/CheckLists";
 import { formatCheckListBody } from "./utils";
+import { UserRepository } from "./repository/UserRepository";
+import { CheckListRepository } from "./repository/CheckListRepository";
 
 (async () => {
     const app = express();
     app.use(express.json());
-    const conn = new Connection();
-    const sign = new Sign(conn);
-    const checklist = new CheckList(conn);
-    const profile = new Profile(conn);
 
-    app.use((req: Request, res: Response, next: NextFunction) => {
+    const conn = new Connection();
+
+    const userRepo = new UserRepository(conn);
+    const clRepo = new CheckListRepository(conn);
+
+    const sign = new Sign(userRepo);
+    const checklist = new CheckList(clRepo, userRepo);
+    const profile = new Profile(userRepo);
+
+    app.use((_: Request, res: Response, next: NextFunction) => {
         res.setHeader(
             "Access-Control-Allow-Origin",
             `http://${process.env.FE_HOST}:${process.env.FE_PORT}`
@@ -24,7 +30,10 @@ import { formatCheckListBody } from "./utils";
             "Access-Control-Allow-Headers",
             "Content-Type, Authorization"
         );
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+        res.setHeader(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, DELETE, PATCH"
+        );
         next();
     });
 
@@ -56,18 +65,18 @@ import { formatCheckListBody } from "./utils";
     });
 
     app.get("/checklist/getall", async (req: Request, res: Response) => {
-        let key = req.headers.authorization?.split(' ')[1];
+        let key = req.headers.authorization?.split(" ")[1];
         let readAll = await checklist.readAll(key);
         res.statusCode = readAll.httpCode;
         res.send(readAll);
-    })
+    });
 
     // done
     // specs:
     // - header
     // Auhtorization: Basic {key}
     app.get("/checklist", async (req: Request, res: Response) => {
-        const key = req.headers.authorization?.split(' ')[1]
+        const key = req.headers.authorization?.split(" ")[1];
         // console.log(key);
         let read = await checklist.readAll(key);
         res.statusCode = read.httpCode;
@@ -91,7 +100,7 @@ import { formatCheckListBody } from "./utils";
     // - body
     // {"subject": string, "description": string, "date": "string", "importance_id": number}
     app.post("/checklist/add", async (req: Request, res: Response) => {
-        const key = req.headers.authorization?.split(' ')[1]
+        const key = req.headers.authorization?.split(" ")[1];
         const data = formatCheckListBody(req.body);
         let add = await checklist.add(data, key);
 
@@ -105,9 +114,9 @@ import { formatCheckListBody } from "./utils";
     // Authorization: Basic {key}
     // Content-Type: application/json
     // - body
-    // {"id": string} 
+    // {"id": string}
     app.delete("/checklist/remove", async (req: Request, res: Response) => {
-        const key = req.headers.authorization?.split(' ')[1]
+        const key = req.headers.authorization?.split(" ")[1];
         const data = formatCheckListBody(req.body);
         let delete_ = await checklist.remove(data, key);
         res.statusCode = delete_.httpCode;
@@ -122,7 +131,7 @@ import { formatCheckListBody } from "./utils";
     // - body
     // {"id": string, "subject": string, "description": string, "date": "string", "importance_id": number}
     app.patch("/checklist/edit", async (req: Request, res: Response) => {
-        const key = req.headers.authorization?.split(' ')[1]
+        const key = req.headers.authorization?.split(" ")[1];
         const data = formatCheckListBody(req.body);
         let edit = await checklist.edit(data, key);
         res.statusCode = edit.httpCode;
@@ -132,7 +141,7 @@ import { formatCheckListBody } from "./utils";
     // Endpoint untuk mendapatkan data user
     app.get("/user/profile", async (req: Request, res: Response) => {
         try {
-            const key = req.headers.authorization?.split(' ')[1];
+            const key = req.headers.authorization?.split(" ")[1];
             const user = await profile.getUser(key);
             res.statusCode = user.httpCode;
             res.send(user);
@@ -145,7 +154,7 @@ import { formatCheckListBody } from "./utils";
     // Endpoint untuk memperbarui data user
     app.put("/user/profile", async (req: Request, res: Response) => {
         try {
-            const key = req.headers.authorization?.split(' ')[1];
+            const key = req.headers.authorization?.split(" ")[1];
             const user = req.body;
             const update = await profile.updateUser(user, key);
             res.statusCode = update.httpCode;
